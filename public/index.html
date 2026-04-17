@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Shortener</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      width: 350px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .input-group label {
+      font-size: 14px;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    .input-group input:focus {
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #5a67d8;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f4f4f4;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+
+    .result a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .copy-btn {
+      margin-top: 10px;
+      background: #48bb78;
+    }
+
+    .copy-btn:hover {
+      background: #38a169;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>🔗 URL Shortener</h2>
+
+    <form id="shortner">
+      <div class="input-group">
+        <label>Enter URL</label>
+        <input type="text" name="url" placeholder="https://example.com" required>
+      </div>
+
+      <div class="input-group">
+        <label>Custom Short Code (optional)</label>
+        <input type="text" name="shortcode" placeholder="my-link">
+      </div>
+
+      <button type="submit">Shorten URL</button>
+    </form>
+
+    <div id="result" class="result" style="display:none;"></div>
+    <button id="copyBtn" class="copy-btn" style="display:none;">Copy</button>
+  </div>
+
+ <script>
+  const form = document.getElementById('shortner');
+  const resultDiv = document.getElementById('result');
+  const copyBtn = document.getElementById('copyBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const url = formData.get('url');
+    const shortcode = formData.get('shortcode');
+
+    // 🔴 Reset UI
+    resultDiv.style.display = 'block';
+    resultDiv.innerText = "⏳ Processing...";
+    copyBtn.style.display = 'none';
+
+    // ✅ Basic URL validation
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      resultDiv.innerText = "❌ Please enter a valid URL (include http:// or https://)";
+      return;
+    }
+
+    try {
+      const res = await fetch('/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, shortcode })
+      });
+
+      const data = await res.json();
+
+      console.log("Response:", data);
+
+      if (res.ok && data.shortUrl) {
+        resultDiv.innerHTML = `
+          ✅ Short URL:<br>
+          <a href="${data.shortUrl}" target="_blank">${data.shortUrl}</a>
+        `;
+        copyBtn.style.display = 'block';
+      } else {
+        resultDiv.innerText = `❌ ${data.message || "Something went wrong"}`;
+      }
+
+    } catch (err) {
+      console.error(err);
+      resultDiv.innerText = "❌ Server error. Please try again.";
+    }
+  });
+
+  copyBtn.addEventListener('click', () => {
+    const text = resultDiv.innerText;
+    navigator.clipboard.writeText(text);
+
+    copyBtn.innerText = 'Copied!';
+    setTimeout(() => copyBtn.innerText = 'Copy', 2000);
+  });
+</script>
+
+</body>
+</html>
